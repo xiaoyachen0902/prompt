@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Lab / workbench: light, restrained */
+    --background: 220 14% 98%;
+    --foreground: 220 18% 18%;
+    --muted: 220 12% 95%;
+    --muted-foreground: 220 10% 42%;
+    --accent: 220 12% 92%;
+    --accent-foreground: 220 15% 22%;
+    --border: 220 10% 90%;
+    --card: 0 0% 100%;
+    --primary: 212 75% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 88%;
+    --success: 152 45% 40%;
+    --warning: 38 55% 48%;
+    --error: 0 52% 48%;
+  }
+
+  .dark {
+    --background: 220 14% 9%;
+    --foreground: 220 12% 92%;
+    --muted: 220 12% 14%;
+    --muted-foreground: 220 10% 58%;
+    --accent: 220 12% 18%;
+    --accent-foreground: 220 12% 92%;
+    --border: 220 10% 20%;
+    --card: 220 14% 12%;
+    --primary: 212 75% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 22%;
+    --success: 152 45% 45%;
+    --warning: 38 55% 55%;
+    --error: 0 52% 55%;
+  }
+
+  body {
+    @apply text-[hsl(var(--foreground))] antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    background: hsl(var(--background));
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  /* Code / prompt content: readable monospace */
+  .font-mono, code, pre, [data-code] {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/90 backdrop-blur-sm;
+    border: 1px solid hsl(var(--border));
+  }
+  .dark .glass {
+    background: hsl(220 14% 12% / 0.9);
+    border-color: hsl(var(--border));
+  }
+
+  .glass-strong {
+    @apply bg-white;
+    border: 1px solid hsl(var(--border));
+  }
+  .dark .glass-strong {
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
+  }
+
+  /* Lab panel: thin border, no heavy shadow */
+  .lab-panel {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .lab-panel-muted {
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+  }
+
+  /* Code block container for Output / Prompt / Diff */
+  .lab-code {
+    background: hsl(220 14% 97%);
+    border: 1px solid hsl(var(--border));
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  .dark .lab-code {
+    background: hsl(220 14% 14%);
+    border-color: hsl(var(--border));
+  }
+
+  /* Row list item (no card) */
+  .lab-row {
+    @apply flex items-center gap-3 py-2.5 px-3;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .lab-row:last-child {
+    border-bottom: none;
+  }
+  .lab-row:hover {
+    background: hsl(var(--muted) / 0.6);
+  }
+
+  /* Status: small dot, restrained */
+  .lab-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .lab-status-dot.success { background: hsl(var(--success)); }
+  .lab-status-dot.error { background: hsl(var(--error)); }
+  .lab-status-dot.warning { background: hsl(var(--warning)); }
+  .lab-status-dot.pulse { animation: lab-pulse 1.2s ease-in-out infinite; }
+  @keyframes lab-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+}
+
+/* Hide React Flow attribution for cleaner UI */
+.react-flow__attribution {
+  display: none !important;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slide-in-from-top {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-in {
+  animation-duration: 0.2s;
+  animation-fill-mode: both;
+}
+
+.slide-in-from-top-full {
+  animation-name: slide-in-from-top;
+}

@@ -1,0 +1,29 @@
+{
+  "name": "prompt-debug-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "fastify": "^5.1.0",
+    "@fastify/cors": "^10.0.1",
+    "openai": "^4.73.0",
+    "zod": "^3.23.8",
+    "nanoid": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

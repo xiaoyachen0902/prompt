@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id         String   @id @default(cuid())
+  name       String
+  maxRetries Int?     @map("max_retries") // default max retries per step (prevents infinite loops)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  steps      Step[]
+  runs       Run[]
+  datasets   Dataset[]
+}
+
+model Step {
+  id                String   @id @default(cuid())
+  agentId           String
+  agent             Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  orderIndex        Int
+  name              String
+  promptTemplate    String   @map("prompt_template") @db.Text
+  model             String?  @default("gpt-4o-mini")
+  temperature       Float?   @default(0.7)
+  maxTokens         Int?     @map("max_tokens")
+  config            String?  @db.Text
+  stepType          String?  @default("action") @map("step_type")   // "action" | "reflection"
+  decisionPrompt    String?  @map("decision_prompt") @db.Text         // run after step to decide next action
+  onCompleteDefault String?  @default("continue") @map("on_complete_default") // "continue" | "retry" | "skip_next" | "branch" | "stop"
+  condition         Json?    // e.g. { "if": "output contains error", "then": "retry", "else": "continue" } or route
+  maxRetries        Int?     @map("max_retries") // override agent default; caps retries for this step
+  checks            Json?    // { mustContain?: string, mustBeJson?: boolean, minLength?: number, maxLength?: number }
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  stepRuns          StepRun[]
+}
+
+model Run {
+  id          String    @id @default(cuid())
+  agentId     String
+  agent       Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  datasetId   String?   @map("dataset_id")
+  dataset     Dataset?  @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  caseIndex   Int?      @map("case_index") // if from dataset, which case
+  shareToken  String?   @unique @map("share_token")
+  totalTokens Int       @default(0) @map("total_tokens")
+  totalCost   Float     @default(0) @map("total_cost")
+  totalLatencyMs Int    @default(0) @map("total_latency_ms")
+  status      String    @default("running") // running | completed | failed
+  stopReason  String?   @map("stop_reason") // e.g. "decision_stop", "max_retries", "error"
+  rating      Int?      // -1, 0, 1 or 1~5
+  note        String?   @db.Text
+  tags        String?   @db.Text // JSON array
+  createdAt   DateTime  @default(now()) @map("created_at")
+  stepRuns    StepRun[]
+}
+
+model StepRun {
+  id              String   @id @default(cuid())
+  runId           String
+  run             Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stepId          String
+  step            Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  orderIndex      Int
+  input           String?  @db.Text
+  prompt          String   @db.Text
+  output          String?  @db.Text
+  evaluation      String?  @db.Text              // reflection step: quality eval (not fed to context)
+  nextAction      String?  @map("next_action")    // CONTINUE | RETRY | SKIP_NEXT | BRANCH | STOP
+  decisionType    String?  @map("decision_type")   // "default" | "decisionPrompt" | "condition"
+  decisionInput   String?  @map("decision_input")  @db.Text // prompt or condition used
+  decisionOutput  String?  @map("decision_output") @db.Text
+  nextStepIndex   Int?     @map("next_step_index") // when nextAction=BRANCH, target orderIndex
+  checkResult     String?  @map("check_result")    @db.Text // JSON: { ok, message?, details? }
+  model           String?
+  temperature     Float?
+  maxTokens       Int?     @map("max_tokens")
+  promptTokens    Int      @default(0) @map("prompt_tokens")
+  completionTokens Int     @default(0) @map("completion_tokens")
+  latencyMs       Int      @default(0) @map("latency_ms")
+  cost            Float    @default(0)
+  status         String   @default("pending")
+  errorMessage   String?   @map("error_message") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@unique([runId, orderIndex])
+  @@index([stepId])
+  @@map("step_runs")
+}
+
+model Dataset {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name      String
+  cases     String   @db.Text // JSON array of input records
+  createdAt DateTime @default(now()) @map("created_at")
+  runs      Run[]
+}
+
+model TemplateCategory {
+  id        String    @id @default(cuid())
+  name      String
+  orderIndex Int      @default(0) @map("order_index")
+  createdAt DateTime  @default(now()) @map("created_at")
+  templates Template[]
+}
+
+model Template {
+  id                String            @id @default(cuid())
+  categoryId        String?           @map("category_id") // null when using builtinCategoryId
+  category          TemplateCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  builtinCategoryId String?          @map("builtin_category_id") // e.g. "professional", "learning"
+  name              String
+  description       String            @db.Text
+  steps             String            @db.Text // JSON array of { name, promptTemplate }
+  exampleInputs     String?           @map("example_inputs") @db.Text // JSON object
+  useCases          String?           @map("use_cases") @db.Text // JSON array of strings
+  createdAt         DateTime          @default(now()) @map("created_at")
+}
